@@ -45,7 +45,7 @@ local function create_log()
 end
 
 local function read_jass(map)
-	local jass = extract(map, 'script\\war3map.j', temp_dir / 'war3map.j') or extract(map, 'war3map.j', temp_dir / 'war3map.j')
+	local jass = extract(map, 'scripts\\war3map.j', temp_dir / 'war3map.j') or extract(map, 'war3map.j', temp_dir / 'war3map.j')
 	if not jass then
 		print '[错误]	没有找到脚本'
 		return
@@ -60,7 +60,7 @@ local function read_jass(map)
 	io.save(temp_dir / 'war3map.j', new_jass)
 
 	if map:remove 'script\\war3map.j' then
-		map:import('script\\war3map.j', temp_dir / 'war3map.j')
+		map:import('scripts\\war3map.j', temp_dir / 'war3map.j')
 	end
 	if map:remove 'war3map.j' then
 		map:import('war3map.j', temp_dir / 'war3map.j')
