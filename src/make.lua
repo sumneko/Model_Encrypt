@@ -50,9 +50,9 @@ local function read_jass(map)
 		return
 	end
 	
-	local new_jass = jass:gsub('[^\\]"(%C*).md[lx]"', function(name)
+	local new_jass = jass:gsub('([^\\]")(%C*).md[lx]"', function(str1, name)
 		if encrypt_model(map, name:gsub([[\\]], [[\]]), '脚本') then
-			return '"' .. encrypt_name:format(name) .. '"'
+			return str1 .. encrypt_name:format(name) .. '"'
 		end
 	end)
 	
@@ -138,7 +138,7 @@ local function main()
 	-- 导出指定文件
 	read_jass(map)
 	read_slk(map)
-	--read_w3u(map)	
+	--read_w3u(map)
 
 	map:close()
 end
