@@ -107,16 +107,16 @@ local function main()
 		print '[错误]	请将要加密的地图拖动到bat中'
 		return
 	end
-
-	-- 保存路径
-	local input_dir  = fs.path(arg[1])
-	local root_dir   = fs.path(arg[2])
-
+	
 	--添加require搜寻路径
 	package.path = package.path .. ';' .. arg[2] .. 'src\\?.lua'
 	package.cpath = package.cpath .. ';' .. arg[2] .. 'build\\?.dll'
 	require 'utility'
 	require 'localization'
+
+	-- 保存路径
+	local input_dir  = fs.path(ansi_to_utf8(arg[1]))
+	local root_dir   = fs.path(ansi_to_utf8(arg[2]))
 	
 	local output_dir = root_dir / fs.path('加密过模型的' .. input_dir:filename():string())
 
