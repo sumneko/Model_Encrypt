@@ -15,13 +15,7 @@ local function extract(map, filename, dir)
 	if not map:extract(filename, dir) then
 		return nil
 	end
-	local file = io.open(dir, 'rb')
-	if not file then
-		return nil
-	end
-	local content = file:read 'a'
-	file:close()
-	return content
+	return io.load(dir, 'rb')
 end
 
 local encrypt_list = {}
@@ -51,9 +45,7 @@ local function create_log()
 	table.insert(list, 1, success)
 	table.insert(list, 2, '若出现模型消失或有模型漏加密的情况,请联系最萌小汐(QQ76196625)')
 	table.insert(list, 3, '加密了以下模型,请检查是否有缺失')
-	local file = io.open(fs.path '模型加密报告.txt', 'wb')
-	file:write(table.concat(list, '\n'))
-	file:close()
+	io.save(fs.path '模型加密报告.txt', table.concat(list, '\n'))
 	print('[成功]	' .. success)
 	print('[成功]	查看 "模型加密报告.txt" 了解更多信息')
 end
@@ -71,9 +63,7 @@ local function read_jass(map)
 		end
 	end)
 	
-	local file = io.open(temp_dir / 'war3map.j', 'wb')
-	file:write(new_jass)
-	file:close()
+	io.save(temp_dir / 'war3map.j', new_jass)
 
 	if map:remove 'script\\war3map.j' then
 		map:import('script\\war3map.j', temp_dir / 'war3map.j')
@@ -95,9 +85,7 @@ local function read_slk(map)
 		end
 	end)
 	
-	local file = io.open(temp_dir / 'unitui.slk', 'wb')
-	file:write(new_slk)
-	file:close()
+	io.save(temp_dir / 'unitui.slk', new_slk)
 	
 	map:import('units\\unitui.slk', temp_dir / 'unitui.slk')
 end
@@ -114,9 +102,7 @@ local function read_w3u(map)
 		end
 	end)
 
-	local file = io.open(temp_dir / 'war3map.w3u', 'wb')
-	file:write(new_w3u)
-	file:close()
+	io.save(temp_dir / 'war3map.w3u', new_w3u)
 
 	map:import('war3map.w3u', temp_dir / 'war3map.w3u')
 end
