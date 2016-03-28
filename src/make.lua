@@ -87,24 +87,24 @@ local function read_slk(map)
 	map:import('units\\unitui.slk', temp_dir / 'unitui.slk')
 end
 
-local function read_w3u(map)
-	local w3u = extract(map, 'war3map.w3u', temp_dir / 'war3map.w3u')
-	if not w3u then
-		return
-	end
-
-	local new_w3u = w3u:gsub('"(%C*).md[lx]"', function(name)
-		if encrypt_model(map, name, '单位表(w3u)') then
-			return '"' .. encrypt_name:format(name) .. '"'
-		end
-	end)
-
-	local file = io.open(temp_dir / 'war3map.w3u', 'wb')
-	file:write(new_w3u)
-	file:close()
-
-	map:import('war3map.w3u', temp_dir / 'war3map.w3u')
-end
+--local function read_w3u(map)
+--	local w3u = extract(map, 'war3map.w3u', temp_dir / 'war3map.w3u')
+--	if not w3u then
+--		return
+--	end
+--
+--	local new_w3u = w3u:gsub('"(%C*).md[lx]"', function(name)
+--		if encrypt_model(map, name, '单位表(w3u)') then
+--			return '"' .. encrypt_name:format(name) .. '"'
+--		end
+--	end)
+--
+--	local file = io.open(temp_dir / 'war3map.w3u', 'wb')
+--	file:write(new_w3u)
+--	file:close()
+--
+--	map:import('war3map.w3u', temp_dir / 'war3map.w3u')
+--end
 
 local function main()
 	-- 检查参数 arg[1]为地图, arg[2]为本地路径
