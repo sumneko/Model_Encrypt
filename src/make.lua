@@ -119,8 +119,8 @@ local function main()
 	local root_dir   = fs.path(ansi_to_utf8(arg[2]))
 
 	fs.set_current_path(root_dir)
-	
-	local output_dir = fs.path('加密过模型的' .. input_dir:filename():string())
+
+	local output_dir = input_dir:parent_path() / fs.path('加密过模型的' .. input_dir:filename():string())
 
 	-- 创建一个临时目录
 	fs.create_directories(temp_dir)
