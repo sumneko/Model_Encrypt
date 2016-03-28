@@ -11,7 +11,8 @@ for name in pairs(fs) do
 	--print(name)
 end
 
-local temp_dir   = fs.path('temp')
+local temp_dir    = fs.path('temp')
+local encrypt_name = '%s体.mdl'
 
 local function extract(map, filename, dir)
 	-- 尝试导出文件
@@ -22,7 +23,87 @@ local function extract(map, filename, dir)
 	if not file then
 		return nil
 	end
-	return file
+	local content = file:read 'a'
+	file:close()
+	return content
+end
+
+local encrypt_list = {}
+local function encrypt_model(map, name, reason)
+	if encrypt_list[name] then
+		encrypt_list[name] = reason
+		return true
+	end
+	local new_name = encrypt_name:format(name)
+	if map:rename(name .. '.mdl', new_name) or map:rename(name .. '.mdx', new_name) then
+		encrypt_list[name] = reason
+		print('rename', name, new_name, reason)
+		return true
+	end
+	return false
+end
+
+local function read_jass(map)
+	local jass = extract(map, 'script\\war3map.j', temp_dir / 'war3map.j') or extract(map, 'war3map.j', temp_dir / 'war3map.j')
+	if not jass then
+		print '[错误]	没有找到脚本'
+		return
+	end
+	
+	local new_jass = jass:gsub('[^\\]"(%C*).md[lx]"', function(name)
+		if encrypt_model(map, name:gsub([[\\]], [[\]]), '脚本') then
+			return '"' .. encrypt_name:format(name) .. '"'
+		end
+	end)
+	
+	local file = io.open(temp_dir / 'war3map.j', 'wb')
+	file:write(new_jass)
+	file:close()
+
+	if map:remove 'script\\war3map.j' then
+		map:import('script\\war3map.j', temp_dir / 'war3map.j')
+	end
+	if map:remove 'war3map.j' then
+		map:import('war3map.j', temp_dir / 'war3map.j')
+	end
+end
+
+local function read_slk(map)
+	local slk = extract(map, 'units\\unitui.slk', temp_dir / 'unitui.slk')
+	if not slk then
+		return
+	end
+
+	local new_slk = slk:gsub('"(%C*).md[lx]"', function(name)
+		if encrypt_model(map, name, '单位表(slk)') then
+			return '"' .. encrypt_name:format(name) .. '"'
+		end
+	end)
+	
+	local file = io.open(temp_dir / 'unitui.slk', 'wb')
+	file:write(new_slk)
+	file:close()
+	
+	map:import('units\\unitui.slk', temp_dir / 'unitui.slk')
+end
+
+local function read_w3u(map)
+	local w3u = extract(map, 'war3map.w3u', temp_dir / 'war3map.w3u')
+	if not w3u then
+		return
+	end
+
+	local new_w3u = w3u:gsub('"(%C*).md[lx]"', function(name)
+		if encrypt_model(map, name, '单位表(w3u)') then
+			return '"' .. encrypt_name:format(name) .. '"'
+		end
+	end)
+
+	local file = io.open(temp_dir / 'war3map.w3u', 'wb')
+	file:write(new_w3u)
+	file:close()
+
+	map:import('war3map.w3u', temp_dir / 'war3map.w3u')
 end
 
 local function main()
@@ -38,7 +119,6 @@ local function main()
 	local output_dir = fs.path('模型加密过的' .. input_dir:filename():string())
 
 	-- 创建一个临时目录
-	fs.remove_all(temp_dir)
 	fs.create_directories(temp_dir)
 	-- 复制一张地图出来
 	local success = pcall(fs.copy_file, input_dir, output_dir, true)
@@ -56,15 +136,11 @@ local function main()
 	end
 
 	-- 导出指定文件
-	local file = extract(map, 'script\\war3map.j', temp_dir / 'war3map.j') or extract(map, 'war3map.j', temp_dir / 'war3map.j')
-	if file then
-		read_j(file)
-	else
-		print '[错误]	没有找到脚本']
-		return
-	end
-	local file = extract(map, 'war3map.w3u', temp_dir / 'war3map.w3u')
-	extract(map, 'units\\unitui.slk', temp_dir / 'unitui.slk')
+	read_jass(map)
+	read_slk(map)
+	read_w3u(map)	
+
+	map:close()
 end
 
 main()

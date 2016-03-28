@@ -5,6 +5,10 @@ require 'i18n'
 local stormlib = ar.stormlib
 local mpq_meta =  { __index = {} }
 
+for name, value in pairs(stormlib) do
+	--print(name, value)
+end
+
 function mpq_meta.__index:import(path_in_archive, import_file_path)
 	return stormlib.add_file_ex(
 			self.handle,
@@ -21,6 +25,18 @@ end
 
 function mpq_meta.__index:close()
 	stormlib.close_archive(self.handle)
+end
+
+function mpq_meta.__index:remove(path_in_archive)
+	return stormlib.remove_file(self.handle, path_in_archive, 0)
+end
+
+function mpq_meta.__index:rename(path_in_archive, new_name)
+	return stormlib.rename_file(self.handle, path_in_archive, new_name)
+end
+
+function mpq_meta.__index:has(path_in_archive)
+	return stormlib.has_file(self.handle, path_in_archive)
 end
 
 function mpq_open(path)
