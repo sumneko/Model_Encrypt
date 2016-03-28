@@ -12,7 +12,7 @@ for name in pairs(fs) do
 end
 
 local temp_dir    = fs.path('temp')
-local encrypt_name = '%s体.mdl'
+local encrypt_name = '%s体'
 
 local function extract(map, filename, dir)
 	-- 尝试导出文件
@@ -35,7 +35,7 @@ local function encrypt_model(map, name, reason)
 		return true
 	end
 	local new_name = encrypt_name:format(name)
-	if map:rename(name .. '.mdl', new_name) or map:rename(name .. '.mdx', new_name) then
+	if map:rename(name .. '.mdl', new_name .. '.mdl') or map:rename(name .. '.mdx', new_name .. '.mdx') then
 		encrypt_list[name] = reason
 		print('rename', name, new_name, reason)
 		return true
@@ -50,9 +50,9 @@ local function read_jass(map)
 		return
 	end
 	
-	local new_jass = jass:gsub('([^\\]")(%C*).md[lx]"', function(str1, name)
+	local new_jass = jass:gsub('([^\\]")(%C*)(.md[lx]")', function(str1, name, str2)
 		if encrypt_model(map, name:gsub([[\\]], [[\]]), '脚本') then
-			return str1 .. encrypt_name:format(name) .. '"'
+			return str1 .. encrypt_name:format(name) .. str2
 		end
 	end)
 	
@@ -74,9 +74,9 @@ local function read_slk(map)
 		return
 	end
 
-	local new_slk = slk:gsub('"(%C*).md[lx]"', function(name)
+	local new_slk = slk:gsub('(")(%C*)(.md[lx]")', function(str1, name, str2)
 		if encrypt_model(map, name, '单位表(slk)') then
-			return '"' .. encrypt_name:format(name) .. '"'
+			return str1 .. encrypt_name:format(name) .. str2
 		end
 	end)
 	
