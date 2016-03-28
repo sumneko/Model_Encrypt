@@ -138,7 +138,7 @@ local function main()
 	-- 导出指定文件
 	read_jass(map)
 	read_slk(map)
-	read_w3u(map)	
+	--read_w3u(map)	
 
 	map:close()
 end
