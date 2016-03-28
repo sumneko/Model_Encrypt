@@ -26,7 +26,7 @@ local function encrypt_model(map, name, reason)
 	return false
 end
 
-local function create_log()
+local function create_log(dir)
 	local list = {}
 	for name, reason in pairs(encrypt_list) do
 		table.insert(list, name)
@@ -39,7 +39,7 @@ local function create_log()
 	table.insert(list, 1, success)
 	table.insert(list, 2, '若出现模型消失或有模型漏加密的情况,请联系最萌小汐(QQ76196625)')
 	table.insert(list, 3, '加密了以下模型,请检查是否有缺失')
-	io.save(fs.path '模型加密报告.txt', table.concat(list, '\n'))
+	io.save(dir / '模型加密报告.txt', table.concat(list, '\n'))
 	print('[成功]	' .. success)
 	print('[成功]	查看 "模型加密报告.txt" 了解更多信息')
 end
@@ -148,7 +148,7 @@ local function main()
 	fs.remove_all(temp_dir)
 
 	-- 创建报告
-	create_log()
+	create_log(input_dir:parent_path())
 end
 
 main()
