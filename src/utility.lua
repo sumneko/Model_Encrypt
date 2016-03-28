@@ -5,10 +5,6 @@ require 'i18n'
 local stormlib = ar.stormlib
 local mpq_meta =  { __index = {} }
 
-for name, value in pairs(stormlib) do
-	--print(name, value)
-end
-
 function mpq_meta.__index:import(path_in_archive, import_file_path)
 	return stormlib.add_file_ex(
 			self.handle,

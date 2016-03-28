@@ -7,10 +7,6 @@ require 'filesystem'
 require 'utility'
 require 'localization'
 
-for name in pairs(fs) do
-	--print(name)
-end
-
 local temp_dir    = fs.path('temp')
 local encrypt_name = '%s体'
 
@@ -87,24 +83,24 @@ local function read_slk(map)
 	map:import('units\\unitui.slk', temp_dir / 'unitui.slk')
 end
 
---local function read_w3u(map)
---	local w3u = extract(map, 'war3map.w3u', temp_dir / 'war3map.w3u')
---	if not w3u then
---		return
---	end
---
---	local new_w3u = w3u:gsub('"(%C*).md[lx]"', function(name)
---		if encrypt_model(map, name, '单位表(w3u)') then
---			return '"' .. encrypt_name:format(name) .. '"'
---		end
---	end)
---
---	local file = io.open(temp_dir / 'war3map.w3u', 'wb')
---	file:write(new_w3u)
---	file:close()
---
---	map:import('war3map.w3u', temp_dir / 'war3map.w3u')
---end
+local function read_w3u(map)
+	local w3u = extract(map, 'war3map.w3u', temp_dir / 'war3map.w3u')
+	if not w3u then
+		return
+	end
+
+	local new_w3u = w3u:gsub('(\0)(%C*)(%.md[lx]\0)', function(str1, name, str2)
+		if encrypt_model(map, name, '单位表(w3u)') then
+			return str1 .. encrypt_name:format(name) .. str2
+		end
+	end)
+
+	local file = io.open(temp_dir / 'war3map.w3u', 'wb')
+	file:write(new_w3u)
+	file:close()
+
+	map:import('war3map.w3u', temp_dir / 'war3map.w3u')
+end
 
 local function main()
 	-- 检查参数 arg[1]为地图, arg[2]为本地路径
@@ -138,7 +134,7 @@ local function main()
 	-- 导出指定文件
 	read_jass(map)
 	read_slk(map)
-	--read_w3u(map)
+	read_w3u(map)
 
 	map:close()
 end
