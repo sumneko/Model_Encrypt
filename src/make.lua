@@ -33,10 +33,29 @@ local function encrypt_model(map, name, reason)
 	local new_name = encrypt_name:format(name)
 	if map:rename(name .. '.mdl', new_name .. '.mdl') or map:rename(name .. '.mdx', new_name .. '.mdx') then
 		encrypt_list[name] = reason
-		print('rename', name, new_name, reason)
 		return true
 	end
 	return false
+end
+
+local function create_log()
+	local list = {}
+	for name, reason in pairs(encrypt_list) do
+		table.insert(list, name)
+	end
+	table.sort(list)
+	for i, name in ipairs(list) do
+		list[i] = ('[%s]:	%s'):format(encrypt_list[name], name)
+	end
+	local success = '加密完成,共加密 ' .. #list .. ' 个模型,用时 ' .. os.clock() .. ' 秒.'
+	table.insert(list, 1, success)
+	table.insert(list, 2, '若出现模型消失或有模型漏加密的情况,请联系最萌小汐(QQ76196625)')
+	table.insert(list, 3, '加密了以下模型,请检查是否有缺失')
+	local file = io.open(fs.path '模型加密报告.txt', 'wb')
+	file:write(table.concat(list, '\n'))
+	file:close()
+	print('[成功]	' .. success)
+	print('[成功]	查看 "模型加密报告.txt" 了解更多信息')
 end
 
 local function read_jass(map)
@@ -47,7 +66,7 @@ local function read_jass(map)
 	end
 	
 	local new_jass = jass:gsub('([^\\]")(%C*)(.md[lx]")', function(str1, name, str2)
-		if encrypt_model(map, name:gsub([[\\]], [[\]]), '脚本') then
+		if encrypt_model(map, name:gsub([[\\]], [[\]]), '脚本(jass)') then
 			return str1 .. encrypt_name:format(name) .. str2
 		end
 	end)
@@ -112,7 +131,7 @@ local function main()
 	-- 保存路径
 	local input_dir  = fs.path(arg[1])
 	local root_dir   = fs.path(arg[2])
-	local output_dir = fs.path('模型加密过的' .. input_dir:filename():string())
+	local output_dir = fs.path('加密过模型的' .. input_dir:filename():string())
 
 	-- 创建一个临时目录
 	fs.create_directories(temp_dir)
@@ -137,6 +156,10 @@ local function main()
 	read_w3u(map)
 
 	map:close()
+	fs.remove_all(temp_dir)
+
+	-- 创建报告
+	create_log()
 end
 
 main()

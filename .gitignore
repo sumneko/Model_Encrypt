@@ -1,2 +1,4 @@
 *.w3x
 temp/
+*.txt
+*.zip
