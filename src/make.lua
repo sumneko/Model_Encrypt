@@ -1,11 +1,5 @@
---添加require搜寻路径
-package.path = package.path .. ';src\\?.lua'
-package.cpath = package.cpath .. ';build\\?.dll'
-
 require 'luabind'
 require 'filesystem'
-require 'utility'
-require 'localization'
 
 local temp_dir    = fs.path('temp')
 local encrypt_name = '%s体'
@@ -117,7 +111,14 @@ local function main()
 	-- 保存路径
 	local input_dir  = fs.path(arg[1])
 	local root_dir   = fs.path(arg[2])
-	local output_dir = fs.path('加密过模型的' .. input_dir:filename():string())
+
+	--添加require搜寻路径
+	package.path = package.path .. ';' .. arg[2] .. 'src\\?.lua'
+	package.cpath = package.cpath .. ';' .. arg[2] .. 'build\\?.dll'
+	require 'utility'
+	require 'localization'
+	
+	local output_dir = root_dir / fs.path('加密过模型的' .. input_dir:filename():string())
 
 	-- 创建一个临时目录
 	fs.create_directories(temp_dir)
