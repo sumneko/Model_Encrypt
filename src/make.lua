@@ -51,7 +51,7 @@ local function read_jass(map)
 		return
 	end
 	
-	local new_jass = jass:gsub('([^\\]")(%C*)(.md[lx]")', function(str1, name, str2)
+	local new_jass = jass:gsub('([^\\]")(%C*)(%.[mM][dD][lLxX]")', function(str1, name, str2)
 		if encrypt_model(map, name:gsub([[\\]], [[\]]), '脚本(jass)') then
 			return str1 .. encrypt_name:format(name) .. str2
 		end
@@ -73,7 +73,7 @@ local function read_slk(map)
 		return
 	end
 
-	local new_slk = slk:gsub('(")(%C*)(.md[lx]")', function(str1, name, str2)
+	local new_slk = slk:gsub('(")(%C*)(%.[mM][dD][lLxX]")', function(str1, name, str2)
 		if encrypt_model(map, name, '单位表(slk)') then
 			return str1 .. encrypt_name:format(name) .. str2
 		end
@@ -90,7 +90,7 @@ local function read_w3u(map)
 		return
 	end
 
-	local new_w3u = w3u:gsub('(\0)(%C*)(%.md[lx]\0)', function(str1, name, str2)
+	local new_w3u = w3u:gsub('(\0)(%C*)(%.[mM][dD][lLxX]\0)', function(str1, name, str2)
 		if encrypt_model(map, name, '单位表(w3u)') then
 			return str1 .. encrypt_name:format(name) .. str2
 		end
@@ -99,6 +99,35 @@ local function read_w3u(map)
 	io.save(temp_dir / 'war3map.w3u', new_w3u)
 
 	map:import('war3map.w3u', temp_dir / 'war3map.w3u')
+end
+
+local function read_lua(map)
+	local listfile = extract(map, '(listfile)', temp_dir / '(listfile)')
+	if not listfile then
+		return
+	end
+
+	for dir in listfile:gmatch '%C+' do
+		if dir:sub(-4, -1) == '.lua' then
+			local lua = extract(map, dir, temp_dir / 'temp.lua')
+			if lua then
+				new_lua = lua:gsub([[([^\]['"])(%C*)(%.[mM][dD][lLxX]['"])]], function(str1, name, str2)
+					if encrypt_model(map, name:gsub([[\\]], [[\]]), '脚本(lua)') then
+						return str1 .. encrypt_name:format(name) .. str2
+					end
+				end)
+				new_lua = new_lua:gsub([[([^\]%[%[)(%C*)(%.[mM][dD][lLxX]%]%])]], function(str1, name, str2)
+					if encrypt_model(map, name, '脚本(lua)') then
+						return str1 .. encrypt_name:format(name) .. str2
+					end
+				end)
+				
+				io.save(temp_dir / 'temp.lua', new_lua)
+	
+				map:import(dir, temp_dir / 'temp.lua')
+			end
+		end
+	end
 end
 
 local function main()
@@ -140,6 +169,7 @@ local function main()
 	end
 
 	-- 导出指定文件
+	read_lua(map)
 	read_jass(map)
 	read_slk(map)
 	read_w3u(map)
