@@ -84,21 +84,21 @@ local function read_slk(map)
 	map:import('units\\unitui.slk', temp_dir / 'unitui.slk')
 end
 
-local function read_w3u(map)
-	local w3u = extract(map, 'war3map.w3u', temp_dir / 'war3map.w3u')
-	if not w3u then
+local function read_w3x(map, w3x)
+	local obj = extract(map, 'war3map.' .. w3x, temp_dir / ('war3map.' .. w3x))
+	if not obj then
 		return
 	end
 
-	local new_w3u = w3u:gsub('(\0)(%C*)(%.[mM][dD][lLxX]\0)', function(str1, name, str2)
-		if encrypt_model(map, name, '单位表(w3u)') then
+	local new_obj = obj:gsub('(\0)(%C*)(%.[mM][dD][lLxX]\0)', function(str1, name, str2)
+		if encrypt_model(map, name, '物编(' .. w3x .. ')') then
 			return str1 .. encrypt_name:format(name) .. str2
 		end
 	end)
 
-	io.save(temp_dir / 'war3map.w3u', new_w3u)
+	io.save(temp_dir / ('war3map.' .. w3x), new_obj)
 
-	map:import('war3map.w3u', temp_dir / 'war3map.w3u')
+	map:import('war3map.' .. w3x, temp_dir / ('war3map.' .. w3x))
 end
 
 local function read_lua(map)
@@ -168,11 +168,17 @@ local function main()
 		return
 	end
 
-	-- 导出指定文件
+	-- 分析指定文件
 	read_lua(map)
 	read_jass(map)
 	read_slk(map)
-	read_w3u(map)
+	read_w3x(map, 'w3u')
+	read_w3x(map, 'w3t')
+	read_w3x(map, 'w3b')
+	read_w3x(map, 'w3d')
+	read_w3x(map, 'w3a')
+	read_w3x(map, 'w3h')
+	read_w3x(map, 'w3q')
 
 	map:close()
 	fs.remove_all(temp_dir)
