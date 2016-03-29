@@ -130,6 +130,14 @@ local function read_lua(map)
 	end
 end
 
+local function fix_head(dir)
+	local map = io.load(dir)
+	if map then
+		local content = map:sub(1, 516) .. '\32\0\0\0' .. map:sub(521, -1)
+		io.save(dir, content)
+	end
+end
+
 local function main()
 	-- 检查参数 arg[1]为地图, arg[2]为本地路径
 	if not arg or #arg < 2 then
@@ -159,6 +167,8 @@ local function main()
 		print '[错误]	地图创建失败,可能是地图文件被占用了'
 		return
 	end
+	-- 修复地图的字头(简单修复)
+	fix_head(output_dir)
 
 	-- 用storm打开复制出来的地图
 	local map = mpq_open(output_dir)
