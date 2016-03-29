@@ -52,7 +52,7 @@ local function read_jass(map)
 	end
 	
 	local new_jass = jass:gsub('([^\\]")(%C*)(%.[mM][dD][lLxX]")', function(str1, name, str2)
-		if encrypt_model(map, name:gsub([[\\]], [[\]]), '脚本(jass)') then
+		if encrypt_model(map, name:gsub([[\\]], [[\]]), 'war3map.j') then
 			return str1 .. encrypt_name:format(name) .. str2
 		end
 	end)
@@ -67,38 +67,38 @@ local function read_jass(map)
 	end
 end
 
-local function read_slk(map)
-	local slk = extract(map, 'units\\unitui.slk', temp_dir / 'unitui.slk')
+local function read_slk(map, name)
+	local slk = extract(map, 'units\\' .. name, temp_dir / name)
 	if not slk then
 		return
 	end
 
-	local new_slk = slk:gsub('(")(%C*)(%.[mM][dD][lLxX]")', function(str1, name, str2)
-		if encrypt_model(map, name, '单位表(slk)') then
-			return str1 .. encrypt_name:format(name) .. str2
+	local new_slk = slk:gsub('(")(%C*)(%.[mM][dD][lLxX]")', function(str1, filename, str2)
+		if encrypt_model(map, filename, name) then
+			return str1 .. encrypt_name:format(filename) .. str2
 		end
 	end)
 	
-	io.save(temp_dir / 'unitui.slk', new_slk)
+	io.save(temp_dir / name, new_slk)
 	
-	map:import('units\\unitui.slk', temp_dir / 'unitui.slk')
+	map:import('units\\' .. name, temp_dir / name)
 end
 
-local function read_w3x(map, w3x)
-	local obj = extract(map, 'war3map.' .. w3x, temp_dir / ('war3map.' .. w3x))
+local function read_w3x(map, name)
+	local obj = extract(map, name, temp_dir / name)
 	if not obj then
 		return
 	end
 
-	local new_obj = obj:gsub('(\0)(%C*)(%.[mM][dD][lLxX]\0)', function(str1, name, str2)
-		if encrypt_model(map, name, '物编(' .. w3x .. ')') then
-			return str1 .. encrypt_name:format(name) .. str2
+	local new_obj = obj:gsub('(\0)(%C*)(%.[mM][dD][lLxX]\0)', function(str1, filename, str2)
+		if encrypt_model(map, filename, name) then
+			return str1 .. encrypt_name:format(filename) .. str2
 		end
 	end)
 
-	io.save(temp_dir / ('war3map.' .. w3x), new_obj)
+	io.save(temp_dir / name, new_obj)
 
-	map:import('war3map.' .. w3x, temp_dir / ('war3map.' .. w3x))
+	map:import(name, temp_dir / name)
 end
 
 local function read_lua(map)
@@ -112,12 +112,12 @@ local function read_lua(map)
 			local lua = extract(map, dir, temp_dir / 'temp.lua')
 			if lua then
 				new_lua = lua:gsub([[([^\]['"])(%C*)(%.[mM][dD][lLxX]['"])]], function(str1, name, str2)
-					if encrypt_model(map, name:gsub([[\\]], [[\]]), '脚本(lua)') then
+					if encrypt_model(map, name:gsub([[\\]], [[\]]), dir) then
 						return str1 .. encrypt_name:format(name) .. str2
 					end
 				end)
 				new_lua = new_lua:gsub([[([^\]%[%[)(%C*)(%.[mM][dD][lLxX]%]%])]], function(str1, name, str2)
-					if encrypt_model(map, name, '脚本(lua)') then
+					if encrypt_model(map, name, dir) then
 						return str1 .. encrypt_name:format(name) .. str2
 					end
 				end)
@@ -171,14 +171,27 @@ local function main()
 	-- 分析指定文件
 	read_lua(map)
 	read_jass(map)
-	read_slk(map)
-	read_w3x(map, 'w3u')
-	read_w3x(map, 'w3t')
-	read_w3x(map, 'w3b')
-	read_w3x(map, 'w3d')
-	read_w3x(map, 'w3a')
-	read_w3x(map, 'w3h')
-	read_w3x(map, 'w3q')
+	read_slk(map, 'unitui.slk')
+	read_slk(map, 'itemdata.slk')
+	read_slk(map, 'commonabilityfunc.txt')
+	read_slk(map, 'humanabilityfunc.txt')
+	read_slk(map, 'neutralabilityfunc.txt')
+	read_slk(map, 'nightelfabilityfunc.txt')
+	read_slk(map, 'orcabilityfunc.txt')
+	read_slk(map, 'undeadabilityfunc.txt')
+	read_slk(map, 'campaignunitfunc.txt')
+	read_slk(map, 'commandfunc.txt')
+	read_slk(map, 'neutralunitfunc.txt')
+	read_slk(map, 'nightelfunitfunc.txt')
+	read_slk(map, 'orcunitfunc.txt')
+	read_slk(map, 'undeadunitfunc.txt')
+	read_w3x(map, 'war3map.w3u')
+	read_w3x(map, 'war3map.w3t')
+	read_w3x(map, 'war3map.w3b')
+	read_w3x(map, 'war3map.w3d')
+	read_w3x(map, 'war3map.w3a')
+	read_w3x(map, 'war3map.w3h')
+	read_w3x(map, 'war3map.w3q')
 
 	map:close()
 	fs.remove_all(temp_dir)
