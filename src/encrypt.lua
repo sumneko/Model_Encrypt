@@ -139,22 +139,22 @@ local function fix_head(dir)
 end
 
 local function main()
-	-- 检查参数 arg[1]为地图, arg[2]为本地路径
-	if not arg or #arg < 2 then
-		print '[错误]	请将要加密的地图拖动到bat中'
-		return
-	end
-	
 	--添加require搜寻路径
-	package.path = package.path .. ';' .. arg[2] .. 'src\\?.lua'
-	package.cpath = package.cpath .. ';' .. arg[2] .. 'build\\?.dll'
+	package.path = package.path .. ';' .. arg[1] .. 'src\\?.lua'
+	package.cpath = package.cpath .. ';' .. arg[1] .. 'build\\?.dll'
 	require 'utility'
 	require 'localization'
 
-	-- 保存路径
-	local input_dir  = fs.path(ansi_to_utf8(arg[1]))
-	local root_dir   = fs.path(ansi_to_utf8(arg[2]))
+	-- 检查参数 arg[1]为地图, arg[2]为本地路径
+	if #arg < 2 then
+		print '[错误]	请将要加密的地图拖动到bat中'
+		return
+	end
 
+	-- 保存路径
+	local root_dir   = fs.path(ansi_to_utf8(arg[1]))
+	local input_dir  = fs.path(ansi_to_utf8(arg[2]))
+	
 	fs.set_current_path(root_dir)
 
 	local output_dir = input_dir:parent_path() / fs.path('加密过模型的' .. input_dir:filename():string())
