@@ -90,7 +90,7 @@ local function read_w3x(map, name)
 		return
 	end
 
-	local new_obj = obj:gsub('(\0)(%C*)(%.[mM][dD][lLxX]\0)', function(str1, filename, str2)
+	local new_obj = obj:gsub('([\0,])(%C*)(%.[mM][dD][lLxX][\0,])', function(str1, filename, str2)
 		if encrypt_model(map, filename, name) then
 			return str1 .. encrypt_name:format(filename) .. str2
 		end
