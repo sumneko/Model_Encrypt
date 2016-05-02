@@ -2,6 +2,7 @@ require 'luabind'
 require 'filesystem'
 
 local temp_dir    = fs.path('temp')
+local temp_file   = temp_dir / 'temp'
 local encrypt_name = '%s体'
 
 local function extract(map, filename, dir)
@@ -68,7 +69,7 @@ local function read_jass(map)
 end
 
 local function read_slk(map, name)
-	local slk = extract(map, 'units\\' .. name, temp_dir / name)
+	local slk = extract(map, name, temp_file)
 	if not slk then
 		return
 	end
@@ -79,9 +80,26 @@ local function read_slk(map, name)
 		end
 	end)
 	
-	io.save(temp_dir / name, new_slk)
+	io.save(temp_file, new_slk)
 	
-	map:import('units\\' .. name, temp_dir / name)
+	map:import(name, temp_file)
+end
+
+local function read_txt(map, name)
+	local txt = extract(map, name, temp_file)
+	if not txt then
+		return
+	end
+
+	local new_txt = txt:gsub('(=)(%C*)(%.[mM][dD][lLxX])', function(str1, filename, str2)
+		if encrypt_model(map, filename, name) then
+			return str1 .. encrypt_name:format(filename) .. str2
+		end
+	end)
+	
+	io.save(temp_file, new_txt)
+	
+	map:import(name, temp_file)
 end
 
 local function read_w3x(map, name)
@@ -109,7 +127,7 @@ local function read_lua(map)
 
 	for dir in listfile:gmatch '%C+' do
 		if dir:sub(-4, -1) == '.lua' then
-			local lua = extract(map, dir, temp_dir / 'temp.lua')
+			local lua = extract(map, dir, temp_file)
 			if lua then
 				new_lua = lua:gsub([[([^\]['"])(%C*)(%.[mM][dD][lLxX]['"])]], function(str1, name, str2)
 					if encrypt_model(map, name:gsub([[\\]], [[\]]), dir) then
@@ -122,9 +140,9 @@ local function read_lua(map)
 					end
 				end)
 				
-				io.save(temp_dir / 'temp.lua', new_lua)
+				io.save(temp_file, new_lua)
 	
-				map:import(dir, temp_dir / 'temp.lua')
+				map:import(dir, temp_file)
 			end
 		end
 	end
@@ -181,58 +199,58 @@ local function main()
 	-- 分析指定文件
 	read_lua(map)
 	read_jass(map)
-	read_slk(map, 'abilitybuffdata.slk')
-	read_slk(map, 'abilitydata.slk')
-	read_slk(map, 'campaignabilityfunc.txt')
-	read_slk(map, 'campaignabilitystrings.txt')
-	read_slk(map, 'campaignunitfunc.txt')
-	read_slk(map, 'campaignunitstrings.txt')
-	read_slk(map, 'campaignupgradefunc.txt')
-	read_slk(map, 'campaignupgradestrings.txt')
-	read_slk(map, 'commandfunc.txt')
-	read_slk(map, 'commonabilityfunc.txt')
-	read_slk(map, 'commonabilitystrings.txt')
-	read_slk(map, 'humanabilityfunc.txt')
-	read_slk(map, 'humanabilitystrings.txt')
-	read_slk(map, 'humanunitfunc.txt')
-	read_slk(map, 'humanunitstrings.txt')
-	read_slk(map, 'humanupgradefunc.txt')
-	read_slk(map, 'humanupgradestrings.txt')
-	read_slk(map, 'itemabilityfunc.txt')
-	read_slk(map, 'itemabilitystrings.txt')
-	read_slk(map, 'itemdata.slk')
-	read_slk(map, 'itemfunc.txt')
-	read_slk(map, 'itemstrings.txt')
-	read_slk(map, 'neutralabilityfunc.txt')
-	read_slk(map, 'neutralabilitystrings.txt')
-	read_slk(map, 'neutralunitfunc.txt')
-	read_slk(map, 'neutralunitstrings.txt')
-	read_slk(map, 'neutralupgradefunc.txt')
-	read_slk(map, 'neutralupgradestrings.txt')
-	read_slk(map, 'nightelfabilityfunc.txt')
-	read_slk(map, 'nightelfabilitystrings.txt')
-	read_slk(map, 'nightelfunitfunc.txt')
-	read_slk(map, 'nightelfunitstrings.txt')
-	read_slk(map, 'nightelfupgradefunc.txt')
-	read_slk(map, 'nightelfupgradestrings.txt')
-	read_slk(map, 'orcabilityfunc.txt')
-	read_slk(map, 'orcabilitystrings.txt')
-	read_slk(map, 'orcunitfunc.txt')
-	read_slk(map, 'orcunitstrings.txt')
-	read_slk(map, 'orcupgradefunc.txt')
-	read_slk(map, 'orcupgradestrings.txt')
-	read_slk(map, 'undeadabilityfunc.txt')
-	read_slk(map, 'undeadabilitystrings.txt')
-	read_slk(map, 'undeadunitfunc.txt')
-	read_slk(map, 'undeadunitstrings.txt')
-	read_slk(map, 'undeadupgradefunc.txt')
-	read_slk(map, 'undeadupgradestrings.txt')
-	read_slk(map, 'unitabilities.slk')
-	read_slk(map, 'unitbalance.slk')
-	read_slk(map, 'unitdata.slk')
-	read_slk(map, 'unitui.slk')
-	read_slk(map, 'unitweapons.slk')
-	read_slk(map, 'upgradedata.slk')
+	read_slk(map, 'units\\abilitybuffdata.slk')
+	read_slk(map, 'units\\abilitydata.slk')
+	read_txt(map, 'units\\campaignabilityfunc.txt')
+	read_txt(map, 'units\\campaignabilitystrings.txt')
+	read_txt(map, 'units\\campaignunitfunc.txt')
+	read_txt(map, 'units\\campaignunitstrings.txt')
+	read_txt(map, 'units\\campaignupgradefunc.txt')
+	read_txt(map, 'units\\campaignupgradestrings.txt')
+	read_txt(map, 'units\\commandfunc.txt')
+	read_txt(map, 'units\\commonabilityfunc.txt')
+	read_txt(map, 'units\\commonabilitystrings.txt')
+	read_txt(map, 'units\\humanabilityfunc.txt')
+	read_txt(map, 'units\\humanabilitystrings.txt')
+	read_txt(map, 'units\\humanunitfunc.txt')
+	read_txt(map, 'units\\humanunitstrings.txt')
+	read_txt(map, 'units\\humanupgradefunc.txt')
+	read_txt(map, 'units\\humanupgradestrings.txt')
+	read_txt(map, 'units\\itemabilityfunc.txt')
+	read_txt(map, 'units\\itemabilitystrings.txt')
+	read_slk(map, 'units\\itemdata.slk')
+	read_txt(map, 'units\\itemfunc.txt')
+	read_txt(map, 'units\\itemstrings.txt')
+	read_txt(map, 'units\\neutralabilityfunc.txt')
+	read_txt(map, 'units\\neutralabilitystrings.txt')
+	read_txt(map, 'units\\neutralunitfunc.txt')
+	read_txt(map, 'units\\neutralunitstrings.txt')
+	read_txt(map, 'units\\neutralupgradefunc.txt')
+	read_txt(map, 'units\\neutralupgradestrings.txt')
+	read_txt(map, 'units\\nightelfabilityfunc.txt')
+	read_txt(map, 'units\\nightelfabilitystrings.txt')
+	read_txt(map, 'units\\nightelfunitfunc.txt')
+	read_txt(map, 'units\\nightelfunitstrings.txt')
+	read_txt(map, 'units\\nightelfupgradefunc.txt')
+	read_txt(map, 'units\\nightelfupgradestrings.txt')
+	read_txt(map, 'units\\orcabilityfunc.txt')
+	read_txt(map, 'units\\orcabilitystrings.txt')
+	read_txt(map, 'units\\orcunitfunc.txt')
+	read_txt(map, 'units\\orcunitstrings.txt')
+	read_txt(map, 'units\\orcupgradefunc.txt')
+	read_txt(map, 'units\\orcupgradestrings.txt')
+	read_txt(map, 'units\\undeadabilityfunc.txt')
+	read_txt(map, 'units\\undeadabilitystrings.txt')
+	read_txt(map, 'units\\undeadunitfunc.txt')
+	read_txt(map, 'units\\undeadunitstrings.txt')
+	read_txt(map, 'units\\undeadupgradefunc.txt')
+	read_txt(map, 'units\\undeadupgradestrings.txt')
+	read_slk(map, 'units\\unitabilities.slk')
+	read_slk(map, 'units\\unitbalance.slk')
+	read_slk(map, 'units\\unitdata.slk')
+	read_slk(map, 'units\\unitui.slk')
+	read_slk(map, 'units\\unitweapons.slk')
+	read_slk(map, 'units\\upgradedata.slk')
 	read_w3x(map, 'war3map.w3u')
 	read_w3x(map, 'war3map.w3t')
 	read_w3x(map, 'war3map.w3b')
