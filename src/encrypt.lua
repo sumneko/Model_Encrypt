@@ -91,7 +91,7 @@ local function read_txt(map, name)
 		return
 	end
 
-	local new_txt = txt:gsub('(=)(%C*)(%.[mM][dD][lLxX])', function(str1, filename, str2)
+	local new_txt = txt:gsub('([=,])([^,%c]*)(%.[mM][dD][lLxX])', function(str1, filename, str2)
 		if encrypt_model(map, filename, name) then
 			return str1 .. encrypt_name:format(filename) .. str2
 		end
