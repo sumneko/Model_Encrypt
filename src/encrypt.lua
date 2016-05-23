@@ -60,12 +60,18 @@ local function read_jass(map)
 	
 	io.save(temp_dir / 'war3map.j', new_jass)
 
-	if map:remove 'script\\war3map.j' then
-		map:import('scripts\\war3map.j', temp_dir / 'war3map.j')
+	if map:has 'script\\war3map.j' then
+		if not map:import('scripts\\war3map.j', temp_dir / 'war3map.j') then
+			print('[错误]	脚本导入失败')
+		end
+		return
+	elseif map:has 'war3map.j' then
+		if not map:import('war3map.j', temp_dir / 'war3map.j') then
+			print('[错误]	脚本导入失败')
+		end
+		return
 	end
-	if map:remove 'war3map.j' then
-		map:import('war3map.j', temp_dir / 'war3map.j')
-	end
+	print('[错误]	没有找到脚本')
 end
 
 local function read_slk(map, name)
@@ -193,6 +199,7 @@ local function main()
 	if not map then
 		print '[错误]	地图打开失败,可能是使用了特殊的加密手段,或者根本不是地图'
 		fs.remove(output_dir)
+		fs.remove_all(temp_dir)
 		return
 	end
 
