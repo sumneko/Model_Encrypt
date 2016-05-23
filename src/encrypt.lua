@@ -267,7 +267,7 @@ local function main()
 	read_w3x(map, 'war3map.w3q')
 
 	map:close()
-	fs.remove_all(temp_dir)
+	--fs.remove_all(temp_dir)
 
 	-- 创建报告
 	create_log(input_dir:parent_path())
