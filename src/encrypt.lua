@@ -13,6 +13,11 @@ local function extract(map, filename, dir)
 	return io.load(dir, 'rb')
 end
 
+local function encrypt_portrait(map, name, new_name)
+	map:rename(name .. '_portrait.mdl', new_name .. '_portrait.mdl')
+	map:rename(name .. '_portrait.mdx', new_name .. '_portrait.mdx')
+end
+
 local encrypt_list = {}
 local function encrypt_model(map, name, reason)
 	if encrypt_list[name] then
@@ -22,6 +27,7 @@ local function encrypt_model(map, name, reason)
 	local new_name = encrypt_name:format(name)
 	if map:rename(name .. '.mdl', new_name .. '.mdl') or map:rename(name .. '.mdx', new_name .. '.mdx') then
 		encrypt_list[name] = reason
+		encrypt_portrait(map, name, new_name)
 		return true
 	end
 	return false
