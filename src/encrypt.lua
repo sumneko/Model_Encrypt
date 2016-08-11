@@ -138,7 +138,7 @@ local function read_lua(map)
 	end
 
 	for dir in listfile:gmatch '%C+' do
-		if dir:sub(-4, -1) == '.lua' then
+		if dir:sub(-4, -1) == '.lua' or dir:sub(-4, -1) == '.ini' then
 			local lua = extract(map, dir, temp_file)
 			if lua then
 				new_lua = lua:gsub([[([^\]['"])(%C*)(%.[mM][dD][lLxX]['"])]], function(str1, name, str2)
