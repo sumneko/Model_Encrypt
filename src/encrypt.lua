@@ -58,7 +58,7 @@ local function read_jass(map)
 		return
 	end
 	
-	local new_jass = jass:gsub('([^\\]")(%C*)(%.[mM][dD][lLxX]")', function(str1, name, str2)
+	local new_jass = jass:gsub('([^\\]")([^%c"]*)(%.[mM][dD][lLxX]")', function(str1, name, str2)
 		if encrypt_model(map, name:gsub([[\\]], [[\]]), 'war3map.j') then
 			return str1 .. encrypt_name:format(name) .. str2
 		end
