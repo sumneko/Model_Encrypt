@@ -20,6 +20,7 @@ end
 
 local encrypt_list = {}
 local function encrypt_model(map, name, reason)
+	name = name:lower()
 	if encrypt_list[name] then
 		encrypt_list[name] = reason
 		return true
