@@ -121,7 +121,7 @@ local function read_w3x(map, name)
 		return
 	end
 
-	local new_obj = obj:gsub('([\0,])(%C*)(%.[mM][dD][lLxX][\0,])', function(str1, filename, str2)
+	local new_obj = obj:gsub('([\0,])(%C-)(%.[mM][dD][lLxX][\0,])', function(str1, filename, str2)
 		if encrypt_model(map, filename, name) then
 			return str1 .. encrypt_name:format(filename) .. str2
 		end
@@ -142,12 +142,12 @@ local function read_lua(map)
 		if dir:sub(-4, -1) == '.lua' or dir:sub(-4, -1) == '.ini' then
 			local lua = extract(map, dir, temp_file)
 			if lua then
-				new_lua = lua:gsub([[([^\]['"])(%C*)(%.[mM][dD][lLxX]['"])]], function(str1, name, str2)
+				new_lua = lua:gsub([[([^\]['"])(%C-)(%.[mM][dD][lLxX]['"])]], function(str1, name, str2)
 					if encrypt_model(map, name:gsub([[\\]], [[\]]), dir) then
 						return str1 .. encrypt_name:format(name) .. str2
 					end
 				end)
-				new_lua = new_lua:gsub([[([^\]%[%[)(%C*)(%.[mM][dD][lLxX]%]%])]], function(str1, name, str2)
+				new_lua = new_lua:gsub([[([^\]%[%[)(%C-)(%.[mM][dD][lLxX]%]%])]], function(str1, name, str2)
 					if encrypt_model(map, name, dir) then
 						return str1 .. encrypt_name:format(name) .. str2
 					end
