@@ -13,7 +13,7 @@ local function get_encrypt_name(name)
 	local lname = name:lower()
 	if not name_map[lname] then
 		index = index + 1
-		name_map[lname] = ('file%d'):format(index)
+		name_map[lname] = ('file%08d'):format(index)
 	end
 	return name_map[lname]
 end
@@ -22,8 +22,8 @@ local function save_listfile(map)
 	local listfile = map:load_file('(listfile)')
 	local lines = { listfile }
 	for i = 10000001, index do
-		lines[#lines+1] = ('file%d.mdx'):format(i)
-		lines[#lines+1] = ('file%d.mdl'):format(i)
+		lines[#lines+1] = ('file%08d.mdx'):format(i)
+		lines[#lines+1] = ('file%08d.mdl'):format(i)
 	end
 	if not map:save_file('(listfile)', table.concat(lines, '\r\n')) then
 		print('[错误]	listfile导入失败')
@@ -31,13 +31,8 @@ local function save_listfile(map)
 end
 
 local function rename(map, old, new)
-	local buf = map:load_file(old)
-	if buf then
-		map:remove_file(old)
-		map:save_file(new, buf)
-		return true
-	end
-	return false
+	local res = map:rename_file(old, new)
+	return res
 end
 
 local function encrypt_portrait(map, name, new_name)

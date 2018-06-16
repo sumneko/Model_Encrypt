@@ -35,6 +35,7 @@ ffi.cdef[[
     bool SFileRemoveFile(uint32_t hMpq, const char* szFileName, unsigned long dwSearchScope);
 
     bool SFileGetFileInfo(uint32_t hMpqOrFile, int InfoClass, void * pvFileInfo, unsigned long cbFileInfo, unsigned long* pcbLengthNeeded);
+    bool SFileRenameFile(uint32_t hMpq, const char * szOldFileName, const char * szNewFileName);
 
     unsigned long SFileGetLocale();
 
@@ -179,6 +180,13 @@ function archive:remove_file(name)
         return false
     end
     return stormlib.SFileRemoveFile(self.handle, name, 0)
+end
+
+function archive:rename_file(old, new)
+    if self.handle == 0 then
+        return false
+    end
+    return stormlib.SFileRenameFile(self.handle, old, new)
 end
 
 function archive:open_file(name)
