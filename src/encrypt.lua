@@ -3,7 +3,6 @@ require 'filesystem'
 
 local temp_dir    = fs.path('temp')
 local temp_file   = temp_dir / 'temp'
-local encrypt_name = '%s体'
 
 local function extract(map, filename, dir)
 	-- 尝试导出文件
@@ -11,6 +10,30 @@ local function extract(map, filename, dir)
 		return nil
 	end
 	return io.load(dir, 'rb')
+end
+
+local index = 10000000
+local name_map = {}
+local function get_encrypt_name(name)
+	local lname = name:lower()
+	if not name_map[lname] then
+		index = index + 1
+		name_map[lname] = ('file%d'):format(index)
+	end
+	return name_map[lname]
+end
+
+local function save_listfile(map)
+	local listfile = extract(map, '(listfile)', temp_dir / '(listfile)')
+	local lines = { listfile }
+	for i = 10000001, index do
+		lines[#lines+1] = ('file%d.mdx'):format(i)
+		lines[#lines+1] = ('file%d.mdl'):format(i)
+	end
+	io.save(temp_dir / '(listfile)', table.concat(lines, '\r\n'))
+	if not map:import('(listfile)', temp_dir / '(listfile)') then
+		print('[错误]	listfile导入失败')
+	end
 end
 
 local function encrypt_portrait(map, name, new_name)
@@ -25,7 +48,7 @@ local function encrypt_model(map, name, reason)
 		encrypt_list[name] = reason
 		return true
 	end
-	local new_name = encrypt_name:format(name)
+	local new_name = get_encrypt_name(name)
 	if map:rename(name .. '.mdl', new_name .. '.mdl') or map:rename(name .. '.mdx', new_name .. '.mdx') then
 		encrypt_list[name] = reason
 		encrypt_portrait(map, name, new_name)
@@ -61,7 +84,7 @@ local function read_jass(map)
 	
 	local new_jass = jass:gsub('([^\\]")([^%c"]*)(%.[mM][dD][lLxX]")', function(str1, name, str2)
 		if encrypt_model(map, name:gsub([[\\]], [[\]]), 'war3map.j') then
-			return str1 .. encrypt_name:format(name) .. str2
+			return str1 .. get_encrypt_name(name) .. str2
 		end
 	end)
 	
@@ -89,7 +112,7 @@ local function read_slk(map, name)
 
 	local new_slk = slk:gsub('(")(%C*)(%.[mM][dD][lLxX]")', function(str1, filename, str2)
 		if encrypt_model(map, filename, name) then
-			return str1 .. encrypt_name:format(filename) .. str2
+			return str1 .. get_encrypt_name(filename) .. str2
 		end
 	end)
 	
@@ -106,7 +129,7 @@ local function read_txt(map, name)
 
 	local new_txt = txt:gsub('([=,])([^,%c]*)(%.[mM][dD][lLxX])', function(str1, filename, str2)
 		if encrypt_model(map, filename, name) then
-			return str1 .. encrypt_name:format(filename) .. str2
+			return str1 .. get_encrypt_name(filename) .. str2
 		end
 	end)
 	
@@ -123,7 +146,7 @@ local function read_w3x(map, name)
 
 	local new_obj = obj:gsub('([\0,])(%C-)(%.[mM][dD][lLxX][\0,])', function(str1, filename, str2)
 		if encrypt_model(map, filename, name) then
-			return str1 .. encrypt_name:format(filename) .. str2
+			return str1 .. get_encrypt_name(filename) .. str2
 		end
 	end)
 
@@ -144,12 +167,12 @@ local function read_lua(map)
 			if lua then
 				new_lua = lua:gsub([[([^\]['"])(%C-)(%.[mM][dD][lLxX]['"])]], function(str1, name, str2)
 					if encrypt_model(map, name:gsub([[\\]], [[\]]), dir) then
-						return str1 .. encrypt_name:format(name) .. str2
+						return str1 .. get_encrypt_name(name) .. str2
 					end
 				end)
 				new_lua = new_lua:gsub([[([^\]%[%[)(%C-)(%.[mM][dD][lLxX]%]%])]], function(str1, name, str2)
 					if encrypt_model(map, name, dir) then
-						return str1 .. encrypt_name:format(name) .. str2
+						return str1 .. get_encrypt_name(name) .. str2
 					end
 				end)
 				
@@ -367,6 +390,8 @@ local function main()
 	read_w3x(map, 'war3map.w3a')
 	read_w3x(map, 'war3map.w3h')
 	read_w3x(map, 'war3map.w3q')
+
+	save_listfile(map)
 
 	map:close()
 	--fs.remove_all(temp_dir)
