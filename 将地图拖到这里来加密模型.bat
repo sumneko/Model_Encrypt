@@ -1,3 +1,4 @@
 @echo off
-"%~dp0build\lua.exe" "%~dp0src\encrypt.lua" "%~dp0\" %1 
+CHCP 65001
+"%~dp0bin\lua.exe" "%~dp0script\encrypt.lua" "%~dp0\" %1 
 pause

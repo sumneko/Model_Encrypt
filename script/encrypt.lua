@@ -1,5 +1,9 @@
-require 'luabind'
+package.path = 'script/?.lua;script/?/init.lua'
+package.cpath = 'bin/?.dll'
+
 require 'filesystem'
+require 'utility'
+local storm = require 'ffi.storm'
 
 local temp_dir    = fs.path('temp')
 local temp_file   = temp_dir / 'temp'
@@ -31,14 +35,24 @@ local function save_listfile(map)
 		lines[#lines+1] = ('file%d.mdl'):format(i)
 	end
 	io.save(temp_dir / '(listfile)', table.concat(lines, '\r\n'))
-	if not map:import('(listfile)', temp_dir / '(listfile)') then
+	if not map:add_file('(listfile)', temp_dir / '(listfile)') then
 		print('[错误]	listfile导入失败')
 	end
 end
 
+local function rename(map, old, new)
+	local buf = map:load_file(old)
+	if buf then
+		map:remove_file(old)
+		map:save_file(new, buf)
+		return true
+	end
+	return false
+end
+
 local function encrypt_portrait(map, name, new_name)
-	map:rename(name .. '_portrait.mdl', new_name .. '_portrait.mdl')
-	map:rename(name .. '_portrait.mdx', new_name .. '_portrait.mdx')
+	rename(map, name .. '_portrait.mdl', new_name .. '_portrait.mdl')
+	rename(map, name .. '_portrait.mdx', new_name .. '_portrait.mdx')
 end
 
 local encrypt_list = {}
@@ -49,7 +63,7 @@ local function encrypt_model(map, name, reason)
 		return true
 	end
 	local new_name = get_encrypt_name(name)
-	if map:rename(name .. '.mdl', new_name .. '.mdl') or map:rename(name .. '.mdx', new_name .. '.mdx') then
+	if rename(map, name .. '.mdl', new_name .. '.mdl') or rename(map, name .. '.mdx', new_name .. '.mdx') then
 		encrypt_list[name] = reason
 		encrypt_portrait(map, name, new_name)
 		return true
@@ -90,13 +104,13 @@ local function read_jass(map)
 	
 	io.save(temp_dir / 'war3map.j', new_jass)
 
-	if map:has 'script\\war3map.j' then
-		if not map:import('scripts\\war3map.j', temp_dir / 'war3map.j') then
+	if map:has_file 'script\\war3map.j' then
+		if not map:add_file('scripts\\war3map.j', temp_dir / 'war3map.j') then
 			print('[错误]	脚本导入失败')
 		end
 		return
-	elseif map:has 'war3map.j' then
-		if not map:import('war3map.j', temp_dir / 'war3map.j') then
+	elseif map:has_file 'war3map.j' then
+		if not map:add_file('war3map.j', temp_dir / 'war3map.j') then
 			print('[错误]	脚本导入失败')
 		end
 		return
@@ -118,7 +132,7 @@ local function read_slk(map, name)
 	
 	io.save(temp_file, new_slk)
 	
-	map:import(name, temp_file)
+	map:add_file(name, temp_file)
 end
 
 local function read_txt(map, name)
@@ -135,7 +149,7 @@ local function read_txt(map, name)
 	
 	io.save(temp_file, new_txt)
 	
-	map:import(name, temp_file)
+	map:add_file(name, temp_file)
 end
 
 local function read_w3x(map, name)
@@ -152,7 +166,7 @@ local function read_w3x(map, name)
 
 	io.save(temp_dir / name, new_obj)
 
-	map:import(name, temp_dir / name)
+	map:add_file(name, temp_dir / name)
 end
 
 local function read_lua(map)
@@ -178,7 +192,7 @@ local function read_lua(map)
 				
 				io.save(temp_file, new_lua)
 	
-				map:import(dir, temp_file)
+				map:add_file(dir, temp_file)
 			end
 		end
 	end
@@ -193,11 +207,6 @@ local function fix_head(dir)
 end
 
 local function main()
-	--添加require搜寻路径
-	package.path = package.path .. ';' .. arg[1] .. 'src\\?.lua'
-	package.cpath = package.cpath .. ';' .. arg[1] .. 'build\\?.dll'
-	require 'utility'
-	require 'localization'
 
 	-- 检查参数 arg[1]为地图, arg[2]为本地路径
 	if #arg < 2 then
@@ -206,10 +215,7 @@ local function main()
 	end
 
 	-- 保存路径
-	local root_dir   = fs.path(ansi_to_utf8(arg[1]))
-	local input_dir  = fs.path(ansi_to_utf8(arg[2]))
-	
-	fs.set_current_path(root_dir)
+	local input_dir  = fs.path(arg[2])
 
 	local output_dir = input_dir:parent_path() / fs.path('加密过模型的' .. input_dir:filename():string())
 
@@ -225,7 +231,7 @@ local function main()
 	fix_head(output_dir)
 
 	-- 用storm打开复制出来的地图
-	local map = mpq_open(output_dir)
+	local map = storm.open(output_dir)
 	if not map then
 		print '[错误]	地图打开失败,可能是使用了特殊的加密手段,或者根本不是地图'
 		fs.remove(output_dir)
