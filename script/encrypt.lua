@@ -6,15 +6,6 @@ require 'utility'
 local storm = require 'ffi.storm'
 
 local temp_dir    = fs.path('temp')
-local temp_file   = temp_dir / 'temp'
-
-local function extract(map, filename, dir)
-	-- 尝试导出文件
-	if not map:extract(filename, dir) then
-		return nil
-	end
-	return io.load(dir, 'rb')
-end
 
 local index = 10000000
 local name_map = {}
@@ -28,14 +19,13 @@ local function get_encrypt_name(name)
 end
 
 local function save_listfile(map)
-	local listfile = extract(map, '(listfile)', temp_dir / '(listfile)')
+	local listfile = map:load_file('(listfile)')
 	local lines = { listfile }
 	for i = 10000001, index do
 		lines[#lines+1] = ('file%d.mdx'):format(i)
 		lines[#lines+1] = ('file%d.mdl'):format(i)
 	end
-	io.save(temp_dir / '(listfile)', table.concat(lines, '\r\n'))
-	if not map:add_file('(listfile)', temp_dir / '(listfile)') then
+	if not map:save_file('(listfile)', table.concat(lines, '\r\n')) then
 		print('[错误]	listfile导入失败')
 	end
 end
@@ -90,7 +80,7 @@ local function create_log(dir)
 end
 
 local function read_jass(map)
-	local jass = extract(map, 'scripts\\war3map.j', temp_dir / 'war3map.j') or extract(map, 'war3map.j', temp_dir / 'war3map.j')
+	local jass = map:load_file('scripts\\war3map.j') or map:load_file('war3map.j')
 	if not jass then
 		print '[错误]	没有找到脚本'
 		return
@@ -102,15 +92,13 @@ local function read_jass(map)
 		end
 	end)
 	
-	io.save(temp_dir / 'war3map.j', new_jass)
-
 	if map:has_file 'script\\war3map.j' then
-		if not map:add_file('scripts\\war3map.j', temp_dir / 'war3map.j') then
+		if not map:save_file('scripts\\war3map.j', new_jass) then
 			print('[错误]	脚本导入失败')
 		end
 		return
 	elseif map:has_file 'war3map.j' then
-		if not map:add_file('war3map.j', temp_dir / 'war3map.j') then
+		if not map:save_file('war3map.j', new_jass) then
 			print('[错误]	脚本导入失败')
 		end
 		return
@@ -119,7 +107,7 @@ local function read_jass(map)
 end
 
 local function read_slk(map, name)
-	local slk = extract(map, name, temp_file)
+	local slk = map:load_file(name)
 	if not slk then
 		return
 	end
@@ -130,13 +118,11 @@ local function read_slk(map, name)
 		end
 	end)
 	
-	io.save(temp_file, new_slk)
-	
-	map:add_file(name, temp_file)
+	map:save_file(name, new_slk)
 end
 
 local function read_txt(map, name)
-	local txt = extract(map, name, temp_file)
+	local txt = map:load_file(name)
 	if not txt then
 		return
 	end
@@ -147,13 +133,11 @@ local function read_txt(map, name)
 		end
 	end)
 	
-	io.save(temp_file, new_txt)
-	
-	map:add_file(name, temp_file)
+	map:save_file(name, new_txt)
 end
 
 local function read_w3x(map, name)
-	local obj = extract(map, name, temp_dir / name)
+	local obj = map:load_file(name)
 	if not obj then
 		return
 	end
@@ -164,20 +148,18 @@ local function read_w3x(map, name)
 		end
 	end)
 
-	io.save(temp_dir / name, new_obj)
-
-	map:add_file(name, temp_dir / name)
+	map:save_file(name, new_obj)
 end
 
 local function read_lua(map)
-	local listfile = extract(map, '(listfile)', temp_dir / '(listfile)')
+	local listfile = map:load_file('(listfile)')
 	if not listfile then
 		return
 	end
 
 	for dir in listfile:gmatch '%C+' do
 		if dir:sub(-4, -1) == '.lua' or dir:sub(-4, -1) == '.ini' then
-			local lua = extract(map, dir, temp_file)
+			local lua = map:load_file(dir)
 			if lua then
 				new_lua = lua:gsub([[([^\]['"])(%C-)(%.[mM][dD][lLxX]['"])]], function(str1, name, str2)
 					if encrypt_model(map, name:gsub([[\\]], [[\]]), dir) then
@@ -190,32 +172,20 @@ local function read_lua(map)
 					end
 				end)
 				
-				io.save(temp_file, new_lua)
-	
-				map:add_file(dir, temp_file)
+				map:save_file(dir, new_lua)
 			end
 		end
 	end
 end
 
-local function fix_head(dir)
-	local map = io.load(dir)
-	if map then
-		local content = map:sub(1, 516) .. '\32\0\0\0' .. map:sub(521, -1)
-		io.save(dir, content)
-	end
-end
-
 local function main()
-
-	-- 检查参数 arg[1]为地图, arg[2]为本地路径
-	if #arg < 2 then
+	if #arg < 1 then
 		print '[错误]	请将要加密的地图拖动到bat中'
 		return
 	end
 
 	-- 保存路径
-	local input_dir  = fs.path(arg[2])
+	local input_dir  = fs.path(arg[1])
 
 	local output_dir = input_dir:parent_path() / fs.path('加密过模型的' .. input_dir:filename():string())
 
@@ -227,8 +197,6 @@ local function main()
 		print '[错误]	地图创建失败,可能是地图文件被占用了'
 		return
 	end
-	-- 修复地图的字头(简单修复)
-	fix_head(output_dir)
 
 	-- 用storm打开复制出来的地图
 	local map = storm.open(output_dir)
@@ -238,6 +206,8 @@ local function main()
 		fs.remove_all(temp_dir)
 		return
 	end
+
+	print(map:number_of_files())
 
 	-- 分析指定文件
 	read_lua(map)
