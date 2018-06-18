@@ -5,7 +5,8 @@ require 'filesystem'
 require 'utility'
 local storm = require 'ffi.storm'
 
-local temp_dir    = fs.path('temp')
+local temp_dir = fs.path('temp')
+local listfile
 
 local index = 10000000
 local name_map = {}
@@ -13,17 +14,16 @@ local function get_encrypt_name(name)
 	local lname = name:lower()
 	if not name_map[lname] then
 		index = index + 1
-		name_map[lname] = ('file%08d'):format(index)
+		name_map[lname] = ('File%08d'):format(index)
 	end
 	return name_map[lname]
 end
 
 local function save_listfile(map)
-	local listfile = map:load_file('(listfile)')
 	local lines = { listfile }
 	for i = 10000001, index do
-		lines[#lines+1] = ('file%08d.mdx'):format(i)
-		lines[#lines+1] = ('file%08d.mdl'):format(i)
+		lines[#lines+1] = ('File%08d.mdx'):format(i)
+		lines[#lines+1] = ('File%08d.mdl'):format(i)
 	end
 	if not map:save_file('(listfile)', table.concat(lines, '\r\n')) then
 		print('[错误]	listfile导入失败')
@@ -147,7 +147,6 @@ local function read_w3x(map, name)
 end
 
 local function read_lua(map)
-	local listfile = map:load_file('(listfile)')
 	if not listfile then
 		return
 	end
@@ -202,8 +201,8 @@ local function main()
 		return
 	end
 
-	print(map:number_of_files())
-
+	listfile = map:load_file('(listfile)')
+	map:remove_file('(listfile)')
 	-- 分析指定文件
 	read_lua(map)
 	read_jass(map)
