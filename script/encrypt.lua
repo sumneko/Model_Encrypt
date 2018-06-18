@@ -15,7 +15,7 @@ local function get_encrypt_name(name)
 	local lname = name:lower()
 	if not name_map[lname] then
 		index = index + 1
-		name_map[lname] = ('sFile%08d'):format(index)
+		name_map[lname] = ('File%08d'):format(index)
 	end
 	return name_map[lname]
 end
@@ -23,9 +23,9 @@ end
 local function save_listfile(map)
 	local lines = { listfile }
 	for i = 10000001, index do
-		lines[#lines+1] = ('sFile%08d.mdx'):format(i)
-		lines[#lines+1] = ('sFile%08d.mdl'):format(i)
-		lines[#lines+1] = ('sFile%08d.blp'):format(i)
+		lines[#lines+1] = ('File%08d.mdx'):format(i)
+		lines[#lines+1] = ('File%08d.mdl'):format(i)
+		lines[#lines+1] = ('File%08d.blp'):format(i)
 	end
 	if not map:save_file('(listfile)', table.concat(lines, '\r\n')) then
 		print('[错误]	listfile导入失败')
@@ -49,11 +49,28 @@ local function encrypt_mapping(map, name, reason)
 end
 
 local function encrypt_blp_as_mdx(map, buf, reason)
-	return buf:gsub('\0(%Z+)(%.[bB][lL][pP])\0', function (name, ext)
-		if encrypt_mapping(map, name, reason) then
-			return '\0' .. get_encrypt_name(name) .. '.blp\0'
+	local start = 1
+	while true do
+		start = buf:find('TEXS', start)
+		if not start then
+			return buf
 		end
-	end)
+		local size, index = ('l'):unpack(buf, start + 4)
+		local finish = index + size - 1
+		if buf:sub(finish+1, finish+4) == 'GEOS' then
+			local list = { buf:sub(1, index), buf:sub(index+1, finish), buf:sub(finish+1)}
+			list[2] = list[2]:gsub('(%Z+)%.[bB][lL][pP](%z*)', function (name, ext)
+				if encrypt_mapping(map, name, reason) then
+					local new_name = get_encrypt_name(name)
+					local len = #ext + #name - #new_name
+					return new_name .. '.blp' .. ('\0'):rep(len)
+				end
+			end)
+			return table.concat(list)
+		else
+			start = start + 4
+		end
+	end
 end
 
 local function encrypt_blp_as_mdl(map, buf, reason)
