@@ -7,6 +7,7 @@ local storm = require 'ffi.storm'
 
 local temp_dir = fs.path('temp')
 local listfile
+local E_BLP
 
 local index = 10000000
 local name_map = {}
@@ -36,8 +37,22 @@ local function rename(map, old, new)
 end
 
 local function encrypt_portrait(map, name, new_name)
-	rename(map, name .. '_portrait.mdl', new_name .. '_portrait.mdl')
-	rename(map, name .. '_portrait.mdx', new_name .. '_portrait.mdx')
+	local buf = map:load_file(name .. '.mdl') or map:load_file(name .. '.mdx')
+	if buf then
+		if E_BLP then
+			if map:has_file(name .. '.mdl') then
+				map:save_file(new_name .. '.mdl', buf)
+			end
+			if map:has_file(name .. '.mdx') then
+				map:save_file(new_name .. '.mdl', buf)
+			end
+		else
+			map:rename_file(name .. '.mdl', new_name .. '.mdl')
+			map:rename_file(name .. '.mdx', new_name .. '.mdx')
+		end
+		return true
+	end
+	return false
 end
 
 local encrypt_list = {}
@@ -48,9 +63,21 @@ local function encrypt_model(map, name, reason)
 		return true
 	end
 	local new_name = get_encrypt_name(name)
-	if rename(map, name .. '.mdl', new_name .. '.mdl') or rename(map, name .. '.mdx', new_name .. '.mdx') then
+	local buf = map:load_file(name .. '.mdl') or map:load_file(name .. '.mdx')
+	if buf then
 		encrypt_list[name] = reason
-		encrypt_portrait(map, name, new_name)
+		if E_BLP then
+			if map:has_file(name .. '.mdl') then
+				map:save_file(new_name .. '.mdl', buf)
+			end
+			if map:has_file(name .. '.mdx') then
+				map:save_file(new_name .. '.mdx', buf)
+			end
+		else
+			map:rename_file(name .. '.mdl', new_name .. '.mdl')
+			map:rename_file(name .. '.mdx', new_name .. '.mdx')
+		end
+		encrypt_portrait(map, name .. '_portrait', new_name .. '_portrait')
 		return true
 	end
 	return false
@@ -180,6 +207,7 @@ local function main()
 
 	-- 保存路径
 	local input_dir  = fs.path(arg[1])
+	E_BLP = arg[2] == 'blp'
 
 	local output_dir = input_dir:parent_path() / fs.path('加密过模型的' .. input_dir:filename():string())
 
