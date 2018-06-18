@@ -25,26 +25,70 @@ local function save_listfile(map)
 	for i = 10000001, index do
 		lines[#lines+1] = ('File%08d.mdx'):format(i)
 		lines[#lines+1] = ('File%08d.mdl'):format(i)
+		lines[#lines+1] = ('File%08d.blp'):format(i)
 	end
 	if not map:save_file('(listfile)', table.concat(lines, '\r\n')) then
 		print('[错误]	listfile导入失败')
 	end
 end
 
-local function rename(map, old, new)
-	local res = map:rename_file(old, new)
-	return res
+
+local encrypt_list = {}
+local function encrypt_mapping(map, name, reason)
+	name = name:lower()
+	if encrypt_list[name] then
+		encrypt_list[name] = reason
+		return true
+	end
+	local new_name = get_encrypt_name(name)
+	if map:rename(name .. '.blp', new_name .. '.blp') then
+		encrypt_list[name] = reason
+		return true
+	end
+	return false
+end
+
+local function encrypt_blp_as_mdx(map, buf, reason)
+	return buf:gsub('\0([^\0]+%)(.[bB][lL][pP])\0', function (name, ext)
+		if encrypt_mapping(map, name, reason) then
+			return '\0' .. name .. '.blp\0'
+		end
+	end)
+end
+
+local function encrypt_blp_as_mdl(map, buf, reason)
+	return buf:gsub('"([^\0]+%)(.[bB][lL][pP])"', function (name, ext)
+		if encrypt_mapping(map, name, reason) then
+			return '"' .. name .. '"'
+		end
+	end)
+end
+
+local function encrypt_blp(map, buf, reason)
+	local new_buf
+	if buf:sub(1, 8) == 'MDLXVERS' then
+		new_buf = encrypt_blp_as_mdx(map, buf, reason)
+	else
+		new_buf = encrypt_blp_as_mdl(map, buf, reason)
+	end
+	return new_buf
 end
 
 local function encrypt_portrait(map, name, new_name)
 	local buf = map:load_file(name .. '.mdl') or map:load_file(name .. '.mdx')
 	if buf then
 		if E_BLP then
-			if map:has_file(name .. '.mdl') then
-				map:save_file(new_name .. '.mdl', buf)
-			end
-			if map:has_file(name .. '.mdx') then
-				map:save_file(new_name .. '.mdl', buf)
+			local new_buf = encrypt_blp(map, buf, name)
+			if buf == new_buf then
+				map:rename_file(name .. '.mdl', new_name .. '.mdl')
+				map:rename_file(name .. '.mdx', new_name .. '.mdx')
+			else
+				if map:has_file(name .. '.mdl') then
+					map:save_file(new_name .. '.mdl', buf)
+				end
+				if map:has_file(name .. '.mdx') then
+					map:save_file(new_name .. '.mdl', buf)
+				end
 			end
 		else
 			map:rename_file(name .. '.mdl', new_name .. '.mdl')
@@ -67,11 +111,17 @@ local function encrypt_model(map, name, reason)
 	if buf then
 		encrypt_list[name] = reason
 		if E_BLP then
-			if map:has_file(name .. '.mdl') then
-				map:save_file(new_name .. '.mdl', buf)
-			end
-			if map:has_file(name .. '.mdx') then
-				map:save_file(new_name .. '.mdx', buf)
+			local new_buf = encrypt_blp(map, buf, name)
+			if buf == new_buf then
+				map:rename_file(name .. '.mdl', new_name .. '.mdl')
+				map:rename_file(name .. '.mdx', new_name .. '.mdx')
+			else
+				if map:has_file(name .. '.mdl') then
+					map:save_file(new_name .. '.mdl', new_buf)
+				end
+				if map:has_file(name .. '.mdx') then
+					map:save_file(new_name .. '.mdx', new_buf)
+				end
 			end
 		else
 			map:rename_file(name .. '.mdl', new_name .. '.mdl')
