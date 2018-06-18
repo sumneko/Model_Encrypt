@@ -15,7 +15,7 @@ local function get_encrypt_name(name)
 	local lname = name:lower()
 	if not name_map[lname] then
 		index = index + 1
-		name_map[lname] = ('File%08d'):format(index)
+		name_map[lname] = ('sFile%08d'):format(index)
 	end
 	return name_map[lname]
 end
@@ -23,9 +23,9 @@ end
 local function save_listfile(map)
 	local lines = { listfile }
 	for i = 10000001, index do
-		lines[#lines+1] = ('File%08d.mdx'):format(i)
-		lines[#lines+1] = ('File%08d.mdl'):format(i)
-		lines[#lines+1] = ('File%08d.blp'):format(i)
+		lines[#lines+1] = ('sFile%08d.mdx'):format(i)
+		lines[#lines+1] = ('sFile%08d.mdl'):format(i)
+		lines[#lines+1] = ('sFile%08d.blp'):format(i)
 	end
 	if not map:save_file('(listfile)', table.concat(lines, '\r\n')) then
 		print('[错误]	listfile导入失败')
@@ -33,33 +33,33 @@ local function save_listfile(map)
 end
 
 
-local encrypt_list = {}
+local encrypt_blp_list = {}
 local function encrypt_mapping(map, name, reason)
 	name = name:lower()
-	if encrypt_list[name] then
-		encrypt_list[name] = reason
+	if encrypt_blp_list[name] then
+		encrypt_blp_list[name] = reason
 		return true
 	end
 	local new_name = get_encrypt_name(name)
-	if map:rename(name .. '.blp', new_name .. '.blp') then
-		encrypt_list[name] = reason
+	if map:rename_file(name .. '.blp', new_name .. '.blp') then
+		encrypt_blp_list[name] = reason
 		return true
 	end
 	return false
 end
 
 local function encrypt_blp_as_mdx(map, buf, reason)
-	return buf:gsub('\0([^\0]+%)(.[bB][lL][pP])\0', function (name, ext)
+	return buf:gsub('\0(%Z+)(%.[bB][lL][pP])\0', function (name, ext)
 		if encrypt_mapping(map, name, reason) then
-			return '\0' .. name .. '.blp\0'
+			return '\0' .. get_encrypt_name(name) .. '.blp\0'
 		end
 	end)
 end
 
 local function encrypt_blp_as_mdl(map, buf, reason)
-	return buf:gsub('"([^\0]+%)(.[bB][lL][pP])"', function (name, ext)
+	return buf:gsub('"([^"]+)(%.[bB][lL][pP])"', function (name, ext)
 		if encrypt_mapping(map, name, reason) then
-			return '"' .. name .. '"'
+			return '"' .. get_encrypt_name(name) .. '"'
 		end
 	end)
 end
@@ -142,7 +142,23 @@ local function create_log(dir)
 	for i, name in ipairs(list) do
 		list[i] = ('[%s]:	%s'):format(encrypt_list[name], name)
 	end
-	local success = '加密完成,共加密 ' .. #list .. ' 个模型,用时 ' .. os.clock() .. ' 秒.'
+	local blp_list = {}
+	for name, reason in pairs(encrypt_blp_list) do
+		table.insert(blp_list, name)
+	end
+	if #blp_list > 0 then
+		list[#list+1] = '===================================================================='
+		table.sort(blp_list)
+		for _, name in ipairs(blp_list) do
+			list[#list+1] = ('[%s]:	%s.blp'):format(encrypt_blp_list[name], name)
+		end
+	end
+	local success
+	if E_BLP then
+		success = '加密完成,共加密 ' .. #list .. ' 个模型和贴图,用时 ' .. os.clock() .. ' 秒.'
+	else
+		success = '加密完成,共加密 ' .. #list .. ' 个模型,用时 ' .. os.clock() .. ' 秒.'
+	end
 	table.insert(list, 1, success)
 	table.insert(list, 2, '若出现模型消失或有模型漏加密的情况,请联系最萌小汐(QQ76196625)')
 	table.insert(list, 3, '加密了以下模型,请检查是否有缺失')
