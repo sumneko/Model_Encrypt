@@ -1,3 +1,5 @@
 *.w3x
 *.txt
 *.zip
+!*.dll
+!*.exe
