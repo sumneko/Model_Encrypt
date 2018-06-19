@@ -27,7 +27,7 @@ local function save_listfile(map)
 		lines[#lines+1] = ('File%08d.萌.mdl'):format(i)
 		lines[#lines+1] = ('File%08d.萌.blp'):format(i)
 	end
-	if not map:save_file('(listfile)', table.concat(lines, '\r\n')) then
+	if not map:save_file('(listfile)', table.concat(lines, '\r')) then
 		print('[错误]	listfile导入失败')
 	end
 end
