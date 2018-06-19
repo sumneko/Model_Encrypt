@@ -15,7 +15,7 @@ local function get_encrypt_name(name)
 	local lname = name:lower()
 	if not name_map[lname] then
 		index = index + 1
-		name_map[lname] = ('File%08d.体'):format(index)
+		name_map[lname] = ('File%08d.萌'):format(index)
 	end
 	return name_map[lname]
 end
@@ -23,9 +23,9 @@ end
 local function save_listfile(map)
 	local lines = { listfile }
 	for i = 10000001, index do
-		lines[#lines+1] = ('File%08d.体.mdx'):format(i)
-		lines[#lines+1] = ('File%08d.体.mdl'):format(i)
-		lines[#lines+1] = ('File%08d.体.blp'):format(i)
+		lines[#lines+1] = ('File%08d.萌.mdx'):format(i)
+		lines[#lines+1] = ('File%08d.萌.mdl'):format(i)
+		lines[#lines+1] = ('File%08d.萌.blp'):format(i)
 	end
 	if not map:save_file('(listfile)', table.concat(lines, '\r\n')) then
 		print('[错误]	listfile导入失败')
